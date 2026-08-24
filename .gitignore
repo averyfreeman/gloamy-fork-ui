@@ -1,53 +1,32 @@
-/target
-firmware/*/target
-*.db
-*.db-shm
-*.db-wal
-*.db-journal
-# Numeric SQLite files (no .db extension)
-[0-9]
-[0-9]-shm
-[0-9]-wal
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+coverage
+*.local
+
+/cypress/videos/
+/cypress/screenshots/
+
+# Editor directories and files
+.idea
 .DS_Store
-._*
-.wt-pr37/
-__pycache__/
-*.pyc
-docker-compose.override.yml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Environment files (may contain secrets)
-.env
-.env.local
-.env.*.local
+*.tsbuildinfo
 
-# Python virtual environments
-
-.venv/
-venv/
-
-# ESP32 build cache (esp-idf-sys managed)
-
-.embuild/
-.env.local
-.env.*.local
-
-# Secret keys and credentials
-.secret_key
-*.key
-*.pem
-credentials.json
-.worktrees/
-
-# Generated release artifacts
-dist/
-release-assets/
-desktop/release-assets/
-
-# Node.js dependencies
-node_modules/
-
-# Local tools (machine-specific)
-.local-tools/
-
-# Local build/release scripts
-build_release.sh
+notes
+gen
+target
