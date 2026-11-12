@@ -1,0 +1,133 @@
+name: Sync desktop UI pin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .nvmrc
+      - .npmrc
+      - docs/accessibility/**
+      - eslint.config.*
+      - components.json
+      - index.html
+      - package.json
+      - pnpm-lock.yaml
+      - playwright.config.ts
+      - postcss.config.*
+      - public/**
+      - oxlint.json
+      - src/**
+      - tailwind.config.*
+      - tests/**
+      - tsconfig*.json
+      - vite.config.ts
+      - vitest.config.ts
+
+concurrency:
+  group: desktop-ui-pin-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update-desktop-pin:
+    name: Open or update desktop UI pin PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create narrowly scoped desktop token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.DESKTOP_SYNC_APP_ID }}
+          private-key: ${{ secrets.DESKTOP_SYNC_APP_PRIVATE_KEY }}
+          owner: averyfreeman
+          repositories: gloamy-fork-desktop-ui
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out desktop repository
+        uses: actions/checkout@v4
+        with:
+          repository: averyfreeman/gloamy-fork-desktop-ui
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: desktop
+          submodules: false
+
+      - name: Update the pinned UI commit and open a pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          UI_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          repo='averyfreeman/gloamy-fork-desktop-ui'
+          git -C desktop fetch --no-tags origin main
+
+          open_prs="$(gh pr list --repo "$repo" --state open --limit 100 --json number,headRefOid,headRepositoryOwner)"
+          while IFS=$'\t' read -r candidate_number candidate_head candidate_owner; do
+            [[ "$candidate_owner" == "${repo%%/*}" ]] || continue
+            candidate_pin="$(gh api "repos/$repo/git/trees/$candidate_head" --jq '.tree[] | select(.path == "ui") | .sha' 2>/dev/null || true)"
+            if [[ "$candidate_pin" == "$UI_SHA" ]]; then
+              echo "Desktop PR #$candidate_number already pins UI commit $UI_SHA." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done < <(jq -r '.[] | [.number, .headRefOid, (.headRepositoryOwner.login // "")] | @tsv' <<< "$open_prs")
+
+          branch='codex/ui-sync'
+          pr_number="$(gh pr list --repo "$repo" --state open --head "$branch" --json number --jq '.[0].number // ""')"
+
+          if [[ -n "$pr_number" ]]; then
+            git -C desktop fetch --no-tags origin "$branch"
+            git -C desktop switch --create "$branch" --track "origin/$branch"
+            git -C desktop merge --no-edit origin/main
+          else
+            if git -C desktop ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+              git -C desktop fetch --no-tags origin "$branch"
+              git -C desktop switch --create "$branch" --track "origin/$branch"
+              git -C desktop merge --no-edit origin/main
+            else
+              git -C desktop switch --create "$branch" origin/main
+            fi
+          fi
+
+          git -C desktop config user.name 'github-actions[bot]'
+          git -C desktop config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C desktop update-index --add --cacheinfo "160000,$UI_SHA,ui"
+
+          if ! git -C desktop diff --cached --quiet; then
+            git -C desktop commit -m 'chore(desktop): update shared UI pin'
+          fi
+
+          if [[ "$(git -C desktop rev-parse HEAD)" == "$(git -C desktop rev-parse origin/main)" ]]; then
+            echo 'Desktop already pins this UI revision.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git -C desktop push --set-upstream origin "$branch"
+
+          body_file="$RUNNER_TEMP/desktop-ui-sync-pr.md"
+          cat > "$body_file" <<EOF
+          <!-- desktop-ui-pin-sync -->
+
+          ## Summary
+
+          - Pin the shared Vue UI to [\`$UI_SHA\`](https://github.com/averyfreeman/gloamy-fork-ui/commit/$UI_SHA).
+          - Verify the browser and Tauri adapter variants through desktop CI.
+
+          Shared UI source changes remain owned by [gloamy-fork-ui](https://github.com/averyfreeman/gloamy-fork-ui).
+          EOF
+
+          title="chore(desktop): sync shared UI ${UI_SHA:0:8}"
+          current_pr="$(gh pr list --repo "$repo" --state open --head "$branch" --json number --jq '.[0].number // ""')"
+          if [[ -n "$current_pr" ]]; then
+            current_body="$(gh pr view "$current_pr" --repo "$repo" --json body --jq '.body // ""')"
+            if [[ "$current_body" == *'<!-- desktop-ui-pin-sync -->'* ]]; then
+              gh pr edit "$current_pr" --repo "$repo" --title "$title" --body-file "$body_file"
+            else
+              echo "Updated UI pin on existing desktop PR #$current_pr." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            gh pr create --repo "$repo" --head "$branch" --base main --title "$title" --body-file "$body_file"
+          fi

@@ -4,7 +4,11 @@ Gloamy Vue UI is the browser interface for the Gloamy daemon. It is maintained
 in its own repository. The standalone
 [Gloamy Desktop](https://github.com/averyfreeman/gloamy-fork-desktop-ui)
 project pins this repository as a Git submodule and adds its desktop-specific
-bridge in the desktop build copy.
+Tauri adapter to a generated build copy. Shared screens and accessibility work
+remain maintained here; the browser build does not expose local daemon controls.
+
+See [desktop source ownership and update flow](docs/desktop-sync.md) for how the
+standalone desktop project consumes and validates pinned UI updates.
 
 The app is built with:
 

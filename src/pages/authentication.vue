@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, unref } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useI18n } from 'vue-i18n'
+import { desktopCapabilities } from '@/lib/platform'
 import type { AuthState } from '@/stores/auth'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const code = ref('')
 const tokenInput = ref('')
@@ -17,8 +20,11 @@ const notice = ref('')
 const isAuthenticated = computed(() => auth.isAuthenticated)
 const isReady = computed(() => auth.isLoaded)
 const authState = computed<AuthState>(() => unref(auth.authState) as AuthState)
+const isDesktop = computed(() => auth.isDesktopApp)
+const desktopError = computed(() => auth.desktopRuntime?.error ?? '')
 
 const daemonPaired = ref<boolean | null>(null)
+const recoveryCode = ref('')
 
 async function probeDaemonPairing(baseUrl: string) {
   daemonPaired.value = null
@@ -83,6 +89,35 @@ const resetMessages = () => {
   notice.value = ''
 }
 
+async function requestLocalPairingCode() {
+  resetMessages()
+  loading.value = true
+  try {
+    const nextCode = await desktopCapabilities?.requestPairingCode()
+    if (!nextCode)
+      throw new Error(t('desktop.recoveryUnavailable'))
+    code.value = nextCode
+    recoveryCode.value = nextCode
+    notice.value = t('desktop.recoveryReady')
+  }
+  catch (err) {
+    error.value = err instanceof Error ? err.message : t('desktop.recoveryUnavailable')
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+async function copyRecoveryCode() {
+  try {
+    await navigator.clipboard.writeText(recoveryCode.value)
+    notice.value = t('desktop.codeCopied')
+  }
+  catch (err) {
+    error.value = err instanceof Error ? err.message : t('desktop.copyFailed')
+  }
+}
+
 const handleAuthenticate = async () => {
   resetMessages()
   try {
@@ -101,7 +136,7 @@ const handleAuthenticate = async () => {
     return
   }
 
-  if (trimmedCode.length >= 6 && daemonPaired.value === true) {
+  if (!isDesktop.value && trimmedCode.length >= 6 && daemonPaired.value === true) {
     error.value = 'This daemon is already paired. Pairing codes are only available on first setup. Paste an existing bearer token (zc_...) or clear gateway.paired_tokens in config.toml and restart the daemon to re-pair.'
     return
   }
@@ -164,17 +199,22 @@ const handleLogout = async () => {
 
             <template v-else-if="!isAuthenticated || authState === 'unreachable'">
               <div class="space-y-4">
-                <div v-if="authState === 'unreachable'" class="text-sm text-red-500 font-bold text-center">
+                <div v-if="desktopError" role="alert" class="text-sm text-red-500 font-medium text-center">
+                  {{ desktopError }}
+                </div>
+
+                <div v-if="authState === 'unreachable' && !desktopError" role="alert" class="text-sm text-red-500 font-bold text-center">
                   Daemon unreachable. Start the daemon and confirm the API base URL.
                 </div>
 
-                <div class="space-y-1.5">
-                  <label class="text-xs font-medium text-foreground">API base URL</label>
+                <div v-if="!isDesktop" class="space-y-1.5">
+                  <label for="api-base-url" class="text-xs font-medium text-foreground">API base URL</label>
                   <p class="text-[11px] text-muted-foreground">
                     Leave blank to reach the daemon through this app's own origin.
                   </p>
                   <div class="flex gap-2">
                     <input
+                      id="api-base-url"
                       v-model="apiBaseUrlInput"
                       type="text"
                       class="w-full h-10 bg-muted/30 border border-border rounded-xl px-3 text-sm outline-none focus:border-primary/40 transition-all"
@@ -192,12 +232,34 @@ const handleLogout = async () => {
                 </div>
 
                 <div v-if="daemonPaired === true" class="text-xs text-muted-foreground text-center">
-                  This daemon is already paired. If you lost your bearer token, clear gateway.paired_tokens in config.toml and restart the daemon to generate a new pairing code.
+                  {{ isDesktop ? t('desktop.recoveryHelp') : t('desktop.browserRecoveryHelp') }}
+                </div>
+
+                <button
+                  v-if="isDesktop"
+                  type="button"
+                  class="w-full h-10 border border-border hover:bg-muted/30 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
+                  :disabled="loading"
+                  @click="requestLocalPairingCode"
+                >
+                  {{ t('desktop.requestPairingCode') }}
+                </button>
+
+                <div v-if="recoveryCode" class="flex items-center gap-2 rounded-xl border border-border bg-muted/20 p-3">
+                  <code role="status" aria-live="polite" class="flex-1 text-center font-mono text-lg tracking-[0.3em]">{{ recoveryCode }}</code>
+                  <button
+                    type="button"
+                    class="shrink-0 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-muted/30"
+                    @click="copyRecoveryCode"
+                  >
+                    {{ t('desktop.copyCode') }}
+                  </button>
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="text-xs font-medium text-foreground">Pairing code</label>
+                  <label for="pairing-code" class="text-xs font-medium text-foreground">Pairing code</label>
                   <input
+                    id="pairing-code"
                     v-model="code"
                     type="text"
                     maxlength="6"
@@ -215,8 +277,9 @@ const handleLogout = async () => {
                 </div>
 
                 <div class="space-y-1.5">
-                  <label class="text-xs font-medium text-foreground">Bearer token</label>
+                  <label for="bearer-token" class="text-xs font-medium text-foreground">Bearer token</label>
                   <input
+                    id="bearer-token"
                     v-model="tokenInput"
                     type="password"
                     class="w-full h-10 bg-muted/30 border border-border rounded-xl px-3 text-sm outline-none focus:border-primary/40 transition-all"
@@ -247,10 +310,10 @@ const handleLogout = async () => {
 
             <div class="min-h-[24px] flex flex-col items-center justify-center">
               <Transition name="fade">
-                <p v-if="error" class="text-sm text-red-500 font-bold text-center">
+                <p v-if="error" role="alert" class="text-sm text-red-500 font-bold text-center">
                   {{ error }}
                 </p>
-                <p v-else-if="notice" class="text-sm text-green-500 font-bold text-center">
+                <p v-else-if="notice" role="status" aria-live="polite" class="text-sm text-green-500 font-bold text-center">
                   {{ notice }}
                 </p>
               </Transition>
