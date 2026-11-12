@@ -1,6 +1,11 @@
-# Gloamy Web
+# Gloamy Vue UI
 
-Gloamy Web is the primary GUI for the project. It is a browser app built with:
+Gloamy Vue UI is the browser interface for the Gloamy daemon. It is maintained
+in its own repository and is also included as the `web` submodule of the parent
+[`gloamy-app-server-oauth2`](https://github.com/averyfreeman/gloamy-app-server-oauth2)
+repository.
+
+The app is built with:
 
 - [Vue 3](https://vuejs.org/) with [Vite](https://vite.dev/) and TypeScript.
 - [Pinia](https://pinia.vuejs.org/) for state, [Vue Router](https://router.vuejs.org/) for navigation.
@@ -13,7 +18,7 @@ logic lives in the daemon; this app only renders and talks HTTP.
 ## Prerequisites
 
 - Node.js (see `.nvmrc`) and [pnpm](https://pnpm.io/).
-- A running Gloamy daemon. From the repository root:
+- A running Gloamy daemon. From the parent Rust repository root:
 
   ```bash
   cargo run -- daemon
@@ -21,14 +26,19 @@ logic lives in the daemon; this app only renders and talks HTTP.
 
   The daemon listens on `http://127.0.0.1:42617` by default.
 
-  To run the daemon and this app together in containers instead, see
-  [Running Gloamy in Docker](../docs/docker-deployment.md) — `docker compose up
-  -d --build` from the repository root builds both and serves the UI on
-  <http://127.0.0.1:8080>.
+  To run the daemon and this app together in containers, clone the parent
+  repository with submodules and follow its
+  [Docker deployment guide](https://github.com/averyfreeman/gloamy-app-server-oauth2/blob/main/docs/docker-deployment.md).
+
+For a complete parent checkout, use:
+
+```bash
+git clone --recurse-submodules https://github.com/averyfreeman/gloamy-app-server-oauth2.git
+```
 
 ## Development
 
-Install dependencies:
+Install dependencies from this repository root:
 
 ```bash
 pnpm install
@@ -91,4 +101,11 @@ pnpm test       # Unit tests, production build, and browser smoke tests
 The browser smoke tests run against the production preview and mock daemon HTTP
 requests. Install Chromium once with `pnpm exec playwright install chromium`;
 run `pnpm build` before invoking `pnpm test:smoke` directly. The `pnpm test`
-command builds automatically.
+command builds automatically. UI-only checks run in this repository's GitHub
+Actions workflow. The parent repository separately validates daemon behavior.
+
+## Accessibility
+
+The UI is being made responsive and is not yet declared WCAG conformant. See
+the [WCAG 2.2 Level A and AA roadmap](docs/accessibility/wcag-2.2-aa-roadmap.md)
+for the criterion inventory, audit scope, and verification plan.

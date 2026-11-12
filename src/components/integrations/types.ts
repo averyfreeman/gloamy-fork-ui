@@ -1,6 +1,7 @@
 import type { Component } from 'vue'
 
 export type IntegrationSetupCapability = 'oauth_device_code'
+export type IntegrationType = 'ai_provider' | 'communication_channel' | 'remote_service' | 'local_runtime'
 
 export interface IntegrationCatalogEntry {
   id?: string
@@ -8,6 +9,7 @@ export interface IntegrationCatalogEntry {
   description: string
   category: string
   status: 'Available' | 'Active' | 'ComingSoon'
+  implementation_type?: IntegrationType
   setup_capability?: IntegrationSetupCapability | string
   connected?: boolean
 }

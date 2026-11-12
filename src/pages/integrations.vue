@@ -3,6 +3,7 @@ import type { IntegrationCatalogEntry } from '@/components/integrations/types'
 import { Icon } from '@iconify/vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { integrationSetupRegistry } from '@/components/integrations/setupRegistry'
+import IntegrationCard from '@/components/integrations/IntegrationCard.vue'
 import { useAuthStore } from '@/stores/auth'
 
 type Integration = IntegrationCatalogEntry
@@ -184,26 +185,6 @@ function normalizeSkillsResponse(response: SkillCatalogEntry[] | { skills?: Skil
   })))
 }
 
-function statusIcon(status: Integration['status']): string {
-  if (status === 'Active') {
-    return 'hugeicons:tick-02'
-  }
-  if (status === 'Available') {
-    return 'hugeicons:add-01'
-  }
-  return 'hugeicons:clock-01'
-}
-
-function statusClass(status: Integration['status']): string {
-  if (status === 'Active') {
-    return 'text-emerald-500'
-  }
-  if (status === 'Available') {
-    return 'text-sky-500'
-  }
-  return 'text-muted-foreground'
-}
-
 function statusLabel(status: Integration['status']): string {
   if (status === 'ComingSoon') {
     return 'Coming Soon'
@@ -357,9 +338,9 @@ onMounted(() => {
 
 <template>
   <div class="h-full flex flex-col overflow-hidden bg-background text-[15px]">
-    <div class="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border/30 space-y-4">
+    <div class="flex-shrink-0 px-3 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-4 border-b border-border/30 space-y-4">
       <div class="flex items-center gap-3">
-        <div class="relative flex-1 max-w-xl">
+        <div class="relative min-w-0 flex-1 max-w-xl">
           <Icon icon="hugeicons:search-01" class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             v-model="searchQuery"
@@ -392,7 +373,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-6 py-4">
+    <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
       <div v-if="loading" class="space-y-2">
         <div
           v-for="i in 8"
@@ -415,46 +396,19 @@ onMounted(() => {
           <section v-for="(integrationList, groupName) in groupedIntegrations" :key="groupName">
             <h2 class="font-sans text-[20px] font-medium text-foreground tracking-tight mb-3">{{ groupName }}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              <component
-                :is="isSetupInteractive(integration) ? 'button' : 'div'"
+              <IntegrationCard
                 v-for="integration in integrationList"
                 :key="integration.id ?? `${integration.category}:${integration.name}`"
-                :type="isSetupInteractive(integration) ? 'button' : undefined"
-                :aria-haspopup="isSetupInteractive(integration) ? 'dialog' : undefined"
-                :aria-label="isSetupInteractive(integration) ? `Set up ${integrationCardName(integration)}` : undefined"
-                class="w-full rounded-2xl border border-border/40 bg-card/20 p-4 transition-colors"
-                :class="isSetupInteractive(integration)
-                  ? 'cursor-pointer text-left hover:border-border/60 hover:bg-card/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
-                  : ''"
-                @click="openIntegrationSetup(integration, $event)"
-              >
-                <div class="flex items-center gap-2 pr-2 mb-1">
-                  <Icon
-                    :icon="integrationIcon(integrationCardName(integration), integration.category)"
-                    class="size-[16px] shrink-0"
-                    :class="integrationIconClass(integrationCardName(integration), integration.category)"
-                    :style="integrationIconStyle(integrationCardName(integration), integration.category)"
-                  />
-                  <span class="font-sans text-[15px] font-medium text-foreground truncate">{{ integrationCardName(integration) }}</span>
-                </div>
-
-                <p class="text-[13px] text-muted-foreground line-clamp-2 mb-3">
-                  {{ integration.description }}
-                </p>
-
-                <div class="flex items-center justify-between gap-2">
-                  <span
-                    class="inline-flex items-center gap-1.5 text-[11px] font-medium"
-                    :class="statusClass(cardStatus(integration))"
-                  >
-                    <Icon :icon="statusIcon(cardStatus(integration))" class="size-3.5 shrink-0" />
-                    {{ cardStatusLabel(integration) }}
-                  </span>
-                  <span class="text-[11px] text-muted-foreground truncate" :title="integration.category">
-                    {{ integration.category }}
-                  </span>
-                </div>
-              </component>
+                :integration="integration"
+                :display-name="integrationCardName(integration)"
+                :setup-interactive="isSetupInteractive(integration)"
+                :icon="integrationIcon(integrationCardName(integration), integration.category)"
+                :icon-class="integrationIconClass(integrationCardName(integration), integration.category)"
+                :icon-style="integrationIconStyle(integrationCardName(integration), integration.category)"
+                :status="cardStatus(integration)"
+                :status-label="cardStatusLabel(integration)"
+                @setup="openIntegrationSetup(integration, $event)"
+              />
             </div>
           </section>
         </div>

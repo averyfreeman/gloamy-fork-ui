@@ -414,7 +414,7 @@ onUnmounted(() => {
     <div
       v-else
       ref="containerRef"
-      class="flex-1 overflow-y-auto px-6 py-4"
+      class="min-h-0 min-w-0 flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4"
       @scroll="handleScroll"
     >
       <div v-if="error" class="mb-4 px-3 py-2 text-[12px] text-amber-500 flex items-center gap-2">
@@ -429,8 +429,8 @@ onUnmounted(() => {
         </p>
       </div>
 
-      <div v-else>
-        <div class="grid grid-cols-[110px_70px_120px_120px_1fr] gap-4 px-4 py-3 text-[12px] font-medium text-muted-foreground border-b border-border/30">
+      <div v-else class="max-w-full overflow-x-auto" role="region" aria-label="Log entries" tabindex="0">
+        <div class="grid min-w-[620px] grid-cols-[110px_70px_120px_120px_1fr] gap-4 px-4 py-3 text-[12px] font-medium text-muted-foreground border-b border-border/30">
           <div>Time</div>
           <div>Level</div>
           <div>Source</div>
@@ -441,7 +441,7 @@ onUnmounted(() => {
         <div
           v-for="log in filteredLogs"
           :key="log.id"
-          class="grid grid-cols-[110px_70px_120px_120px_1fr] gap-4 px-4 py-2.5 items-center text-[13px] border-b border-border/20 last:border-b-0"
+          class="grid min-w-[620px] grid-cols-[110px_70px_120px_120px_1fr] gap-4 px-4 py-2.5 items-center text-[13px] border-b border-border/20 last:border-b-0"
         >
           <div class="text-muted-foreground text-[11px] font-mono">
             <span class="text-muted-foreground/60 mr-1">{{ formatDate(log.timestamp) }}</span>
