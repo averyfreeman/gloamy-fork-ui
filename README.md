@@ -1,9 +1,10 @@
 # Gloamy Vue UI
 
 Gloamy Vue UI is the browser interface for the Gloamy daemon. It is maintained
-in its own repository and is also included as the `web` submodule of the parent
-[`gloamy-app-server-oauth2`](https://github.com/averyfreeman/gloamy-app-server-oauth2)
-repository.
+in its own repository. The standalone
+[Gloamy Desktop](https://github.com/averyfreeman/gloamy-fork-desktop-ui)
+project pins this repository as a Git submodule and adds its desktop-specific
+bridge in the desktop build copy.
 
 The app is built with:
 
@@ -26,15 +27,8 @@ logic lives in the daemon; this app only renders and talks HTTP.
 
   The daemon listens on `http://127.0.0.1:42617` by default.
 
-  To run the daemon and this app together in containers, clone the parent
-  repository with submodules and follow its
+  The daemon can also run in Docker; see the backend repository's
   [Docker deployment guide](https://github.com/averyfreeman/gloamy-app-server-oauth2/blob/main/docs/docker-deployment.md).
-
-For a complete parent checkout, use:
-
-```bash
-git clone --recurse-submodules https://github.com/averyfreeman/gloamy-app-server-oauth2.git
-```
 
 ## Development
 
