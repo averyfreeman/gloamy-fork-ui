@@ -16,6 +16,12 @@ px, desktop, 200% text zoom, and text-spacing overrides. The UI must remain
 usable with keyboard alone and with browser zoom; mobile compatibility does not
 mean a separate native iOS or Android application.
 
+When the desktop capability adapter is available, also audit the conditional
+daemon-status message, one-time pairing-code recovery controls, and keep-running
+preference in authentication and settings. Verify their labels, status and error
+announcements, keyboard operation, and narrow and desktop layouts. This is
+shared UI behavior with a desktop-provided adapter, not a separate screen copy.
+
 Status meanings:
 
 - **Implemented in this change**: the shared-shell or responsive behavior was
@@ -145,6 +151,9 @@ restoration behavior were visible in the accessibility tree.
 - Screen-reader operation, contrast measurements in both themes, landscape
   orientation, the complete keyboard path on every route, and all loading,
   error, empty, and connected states remain unverified.
+- Desktop-only capability controls have not yet been separately audited with a
+  real Tauri runtime; automated desktop adapter tests do not establish WCAG
+  conformance.
 - The automated Lighthouse audit could not save its report in the available
   environment. Re-run it in a writable environment and combine the results
   with manual checks; an automated score alone is not conformance evidence.
