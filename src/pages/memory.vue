@@ -280,7 +280,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-6 py-4">
+    <div class="min-h-0 min-w-0 flex-1 overflow-y-auto px-3 py-3 sm:px-6 sm:py-4">
       <div v-if="loading" class="space-y-2">
         <div
           v-for="i in 8"
@@ -300,8 +300,8 @@ onMounted(() => {
           <p class="text-muted-foreground text-[13px]">No memories found</p>
         </div>
 
-        <div v-else class="border border-border/40 rounded-xl overflow-hidden">
-          <div class="grid grid-cols-[220px_130px_180px_1fr_90px] gap-4 px-4 py-3 bg-card/30 border-b border-border/30 text-[12px] font-medium text-muted-foreground">
+        <div v-else class="max-w-full overflow-x-auto rounded-xl border border-border/40" role="region" aria-label="Memory entries" tabindex="0">
+          <div class="grid min-w-[760px] grid-cols-[220px_130px_180px_1fr_90px] gap-4 px-4 py-3 bg-card/30 border-b border-border/30 text-[12px] font-medium text-muted-foreground">
             <div>Key</div>
             <div>Category</div>
             <div>Updated</div>
@@ -312,7 +312,7 @@ onMounted(() => {
           <div
             v-for="entry in filteredEntries"
             :key="entry.id"
-            class="grid grid-cols-[220px_130px_180px_1fr_90px] gap-4 px-4 py-3 border-b border-border/20 last:border-b-0 items-center text-[13px] hover:bg-card/20 transition-colors"
+            class="grid min-w-[760px] grid-cols-[220px_130px_180px_1fr_90px] gap-4 px-4 py-3 border-b border-border/20 last:border-b-0 items-center text-[13px] hover:bg-card/20 transition-colors"
           >
             <div class="truncate text-foreground font-medium" :title="entry.key">
               {{ entry.key }}

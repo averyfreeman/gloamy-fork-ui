@@ -786,9 +786,9 @@ onUnmounted(() => {
               </div>
 
               <!-- Table structure -->
-              <div class="rounded-xl border border-border/40 overflow-hidden bg-card/20">
+              <div class="max-w-full overflow-x-auto rounded-xl border border-border/40 bg-card/20" role="region" :aria-label="`${section.name} configuration entries`" tabindex="0">
                 <!-- Header row -->
-                <div class="grid grid-cols-[1fr_80px_2fr] gap-4 px-4 py-2.5 bg-card/40 border-b border-border/30 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                <div class="grid min-w-[600px] grid-cols-[1fr_80px_2fr] gap-4 px-4 py-2.5 bg-card/40 border-b border-border/30 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   <div>Key</div>
                   <div>Type</div>
                   <div>Value</div>
@@ -798,7 +798,7 @@ onUnmounted(() => {
                 <div
                   v-for="entry in section.entries"
                   :key="`${section.name}-${entry.key}`"
-                  class="grid grid-cols-[1fr_80px_2fr] gap-4 px-4 py-3 border-b border-border/20 last:border-0 hover:bg-card/30 transition-colors group"
+                  class="grid min-w-[600px] grid-cols-[1fr_80px_2fr] gap-4 px-4 py-3 border-b border-border/20 last:border-0 hover:bg-card/30 transition-colors group"
                 >
                   <!-- Key -->
                   <div class="flex items-center gap-2 min-w-0">

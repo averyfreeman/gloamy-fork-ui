@@ -149,7 +149,7 @@ const handleLogout = async () => {
 
 <template>
   <div class="h-full w-full bg-background select-none">
-    <div class="grid h-full w-full grid-cols-2">
+    <div class="grid h-full w-full grid-cols-1 overflow-y-auto md:grid-cols-2">
       <section class="min-w-0 flex items-center justify-center px-6 py-8 lg:px-12">
         <div class="w-full max-w-[400px] flex flex-col items-center">
           <span class="text-[28px] leading-none font-semibold tracking-wide text-emerald-600 sidebar-brand mb-2">GLOAMY</span>

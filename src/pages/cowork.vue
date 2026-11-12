@@ -248,7 +248,7 @@ function formatElapsed(ms?: number): string {
             </button>
           </div>
 
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div
               v-for="(prompt, i) in savedPrompts"
               :key="i"

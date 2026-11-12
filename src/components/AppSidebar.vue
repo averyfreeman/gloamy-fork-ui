@@ -3,15 +3,21 @@ import { Icon } from '@iconify/vue'
 import { ToolCaseIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
 import { useUIStateStore } from '@/stores/uiState'
 import { useCoworkStore } from '@/stores/cowork'
+
+const props = defineProps<{ mobileOpen: boolean }>()
+const emit = defineEmits<{ close: [] }>()
 
 const route = useRoute()
 const uiStore = useUIStateStore()
 const coworkStore = useCoworkStore()
 const { state } = storeToRefs(uiStore)
+const mobileCloseButton = ref<HTMLButtonElement | null>(null)
+const isMobile = useMediaQuery('(max-width: 767px)')
 
 onMounted(() => {
   coworkStore.fetchHistory()
@@ -20,7 +26,7 @@ onMounted(() => {
 type LeafNavItem = { icon?: string; hugeIcon?: object; label: string; to: string }
 type GroupNavItem = { icon: string; label: string; children: LeafNavItem[] }
 
-const isCollapsed = computed(() => state.value.leftSidebarCollapsed)
+const isCollapsed = computed(() => !isMobile.value && state.value.leftSidebarCollapsed)
 
 const navItems: Array<LeafNavItem | GroupNavItem> = [
   { icon: 'hugeicons:dashboard-square-01', label: 'Dashboard', to: '/' },
@@ -60,21 +66,46 @@ const getNavItemKey = (item: LeafNavItem | GroupNavItem) => (isGroupNavItem(item
 
 const historyItems = computed(() => coworkStore.sessions)
 
+async function focusMobileCloseButton() {
+  await nextTick()
+  mobileCloseButton.value?.focus()
+}
+
+defineExpose({ focusMobileCloseButton })
+
 </script>
 
 <template>
   <aside
+    id="app-navigation"
     v-motion
     :initial="{ opacity: 0, x: -20 }"
     :enter="{ opacity: 1, x: 0, transition: { duration: 300 } }"
-    class="h-full flex flex-col bg-card transition-all duration-300 ease-out select-none"
-    :class="isCollapsed ? 'w-16' : 'w-[220px]'"
+    class="h-full flex flex-col bg-card transition-transform duration-200 ease-out select-none max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 md:relative md:translate-x-0 motion-reduce:transition-none"
+    :class="[
+      isCollapsed ? 'md:w-16 w-[min(85vw,280px)]' : 'md:w-[220px] w-[min(85vw,280px)]',
+      props.mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+    ]"
+    :aria-hidden="isMobile && !props.mobileOpen ? 'true' : undefined"
+    :inert="isMobile && !props.mobileOpen"
+    :role="isMobile && props.mobileOpen ? 'dialog' : undefined"
+    :aria-modal="isMobile && props.mobileOpen ? 'true' : undefined"
+    aria-label="Primary navigation"
   >
-    <div class="px-4 h-14 flex items-center">
+    <div class="px-4 h-14 shrink-0 flex items-center justify-between">
       <span v-if="!isCollapsed" class="text-[28px] leading-none font-semibold tracking-wide text-emerald-600 sidebar-brand">GLOAMY</span>
+      <button
+        ref="mobileCloseButton"
+        type="button"
+        class="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden"
+        aria-label="Close navigation menu"
+        @click="emit('close')"
+      >
+        <Icon icon="hugeicons:cancel-01" class="size-5" aria-hidden="true" />
+      </button>
     </div>
 
-    <nav class="flex flex-col gap-0.5 px-2">
+    <nav class="flex min-h-0 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Main menu">
       <template v-for="(item, i) in navItems" :key="getNavItemKey(item)">
         <div
           v-if="isGroupNavItem(item)"

@@ -355,7 +355,7 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <div class="grid grid-cols-3 gap-2.5 auto-rows-[320px]">
+      <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 auto-rows-[320px]">
         <!-- Cost Section -->
         <section>
           <div class="p-4 rounded-lg border border-border/50 bg-card/20 h-full">
